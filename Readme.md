@@ -1,7 +1,7 @@
 # Rahat Setup
 ## Clone Rahat Setup Repo:
 ```sh
-git clone 
+git clone https://github.com/rahataid/Rahat-Setup.git
 ```
 
 ## Prerequisites Tools:
@@ -57,4 +57,7 @@ export CWD=${PWD}
     cd $CWD
     cd rahat-platform
     pnpx prisma migrate dev --skip-seed
+    cd $CWD
+    cd docker
+    docker compose -f docker-compose-local.yaml restart
     ```
