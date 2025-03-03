@@ -1,0 +1,78 @@
+services:
+  rahat_db:
+    image: postgres:14
+    restart: unless-stopped
+    container_name: "rahat_db"
+    environment:
+      POSTGRES_PASSWORD: "rahat"
+      POSTGRES_USER: "postgres"
+      POSTGRES_MULTIPLE_DATABASES: core,project1
+    volumes:
+      - ./pg-init-scripts:/docker-entrypoint-initdb.d
+      - ./vol/rahat_db:/var/lib/postgresql/data
+    # ports:
+      # - 5432:5432
+    network_mode: "host"
+
+  rahat_redis:
+    container_name: rahat_redis
+    image: redis:6.2.12
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --requirepass rahat --maxmemory-policy noeviction
+    volumes:
+      - ./vol/rahat_redis:/data
+    # ports:
+      # - 6379:6379
+    network_mode: "host"
+
+  rahat_platform:
+    build:
+      context: ../rahat-platform
+      dockerfile: Dockerfile.rahat.local
+    container_name: rahat_platform
+    environment:
+      NX_DAEMON: "false"
+    restart: unless-stopped
+    command: /bin/sh -c "npx nx reset && pnpx prisma generate && pnpm rahat"
+    volumes:
+      - ../rahat-platform:/usr/src/app 
+      - /usr/src/app/node_modules 
+    env_file:
+      - .env.platform
+    # ports:
+      # - 3333:3333
+    network_mode: "host"
+
+  rahat_beneficiary:
+    build:
+      context: ../rahat-platform
+      dockerfile: Dockerfile.beneficiary.local
+    container_name: rahat_beneficiary
+    environment:
+      NX_DAEMON: "false"
+    restart: unless-stopped
+    volumes:
+      - ../rahat-platform:/usr/src/app 
+      - /usr/src/app/node_modules 
+    command: /bin/sh -c "npx nx reset && pnpx prisma generate && pnpm beneficiary"
+    env_file:
+      - .env.platform
+    network_mode: "host"
+
+  rahat_ui:
+    build:
+      context: ../rahat-ui
+      dockerfile: Dockerfile.rahat-ui.local
+    container_name: rahat_ui
+    restart: unless-stopped
+    environment:
+      NX_DAEMON: "false"
+    volumes:
+      - ../rahat-ui:/usr/src/app 
+      - /usr/src/app/node_modules
+    command: /bin/sh -c "npx nx reset && pnpm rahat-ui"
+    env_file:
+      - .env.rahat-ui
+    # ports:
+      # - 3000:3000
+    network_mode: "host"
