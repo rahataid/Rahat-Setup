@@ -31,6 +31,7 @@ services:
     restart: unless-stopped
     env_file:
       - .env.platform
+    command: sleep 500 
     # ports:
       # - 3333:3333
     network_mode: "host"

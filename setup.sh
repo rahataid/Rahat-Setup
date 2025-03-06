@@ -28,6 +28,11 @@ has_wget() {
     has_cmd wget
 }
 
+has_sed() {
+    has_cmd sed
+}
+
+
 # Check whether 'curl' command exists.
 has_curl() {
     has_cmd curl
@@ -252,6 +257,16 @@ setup_environment() {
     cp docker/.env.platform rahat-platform/.env || handle_error "copying .env.platform to rahat-platform"
 }
 
+# Function to comment out the command line in the docker-compose.yml
+comment_out_command_line() {
+    cd $CWD || handle_error "changing to Rahat-Setup directory"
+    echo "Commenting out the 'command: sleep 500' line in the docker-compose.yml..."
+    
+    # Use 'sed' to comment out the exact line 'command: sleep 500'
+    sed -i '/^command: sleep 500/s/^/#/' docker/docker-compose.yaml || handle_error "commenting out the 'command: sleep 500' line in docker-compose.yml"
+}
+
+
 # Start application with Docker Compose
 start_docker_compose() {
     echo "Starting application with Docker Compose..."
@@ -398,7 +413,10 @@ main() {
     start_docker_compose "$1"
 
     # Run Prisma migrations
-    run_prisma_migrations
+    run_prisma_migrations "$1"
+
+    # Comment out the 'command' line
+    comment_out_command_line 
 
     # Restart Docker Compose
     restart_docker_compose
