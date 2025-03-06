@@ -293,7 +293,7 @@ restart_docker_compose() {
         # If 'dev' is passed, run the migration locally
         docker compose -f docker-compose-local.yaml restart || handle_error "restarting Docker containers with docker-compose"
     else
-        docker compose -f docker-compose-local.yaml restart || handle_error "restarting Docker containers with docker-compose"
+        docker compose -f docker-compose.yaml restart || handle_error "restarting Docker containers with docker-compose"
     fi
     cd $CWD
 }
