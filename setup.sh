@@ -38,6 +38,13 @@ has_curl() {
     has_cmd curl
 }
 
+has_nvm() {
+    has_cmd nvm
+}
+
+has_node() {
+    has_cmd node
+}
 # Check whether the given command exists.
 has_cmd() {
     command -v "$1" > /dev/null 2>&1
@@ -147,21 +154,30 @@ check_ports_occupied() {
 }
 
 setup_node() {
-    echo "Installing NVM..."
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash || handle_error "installing NVM"
+    if has_nvm; then
+        echo "✅ NVM is already installed."
+    else
+        echo "Installing NVM..."
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash || handle_error "installing NVM"
+    fi
 
     echo "Loading NVM..."
     export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" || handle_error "loading nvm.sh"
 
-    echo "Installing Node.js v20..."
-    nvm install v20 || handle_error "installing Node.js v20"
+    if has_node; then
+        echo "✅ Node.js is already installed."
+    else
+        echo "Installing Node.js v20..."
+        nvm install v20 || handle_error "installing Node.js v20"
+    fi
 
     echo "Installing PNPM globally..."
     npm install -g pnpm || handle_error "installing pnpm"
     
-    echo "Node.js and pnpm setup complete!"
+    echo "✅ Node.js and pnpm setup complete!"
 }
+
 
 
 request_sudo() {
@@ -189,17 +205,11 @@ install_docker() {
         # Install Docker on Ubuntu/Debian-based systems
         $sudo_cmd apt-get update -y || handle_error "updating package list"
         $sudo_cmd apt-get install -y apt-transport-https ca-certificates curl software-properties-common || handle_error "installing dependencies"
-        
-        # Download and add Docker GPG key
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | $sudo_cmd tee /etc/apt/keyrings/docker.asc > /dev/null || handle_error "adding Docker GPG key"
-        
-        # Add Docker repository
         echo \
         "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
         $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
         $sudo_cmd tee /etc/apt/sources.list.d/docker.list > /dev/null || handle_error "adding Docker repository"
-
-        # Update package list and install Docker
         $sudo_cmd apt-get update -y || handle_error "updating package list"
         $sudo_cmd apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || handle_error "installing Docker"
         $sudo_cmd usermod -aG docker "${USER}" || handle_error "adding user to docker group"
@@ -278,10 +288,12 @@ setup_environment() {
 # Function to comment out the command line in the docker-compose.yml
 comment_out_command_line() {
     cd $CWD || handle_error "changing to Rahat-Setup directory"
-    echo "Commenting out the 'command: sleep 500' line in the docker-compose.yml..."
-    
-    # Use 'sed' to comment out the exact line 'command: sleep 500'
-    sed -i 's/command: sleep 500/#command: sleep 500/' docker/docker-compose.yaml || handle_error "commenting out the 'command: sleep 500' line in docker-compose.yml"
+    if [ "$1" == "dev" ]; then
+        echo "Nothing"
+    else
+        echo "Commenting out the 'command: sleep 500' line in the docker-compose.yml..."
+        sed -i 's/command: sleep 500/#command: sleep 500/' docker/docker-compose.yaml || handle_error "commenting out the 'command: sleep 500' line in docker-compose.yml"
+    fi
 }
 
 
@@ -391,7 +403,6 @@ main() {
         if [[ $package_manager == "apt-get" || $package_manager == "zypper" || $package_manager == "yum" ]]; then
             request_sudo
             install_docker
-            sudo usermod -aG docker "${USER}"
         elif is_mac; then
             echo ""
             echo "+++++++++++ IMPORTANT READ ++++++++++++++++++++++"
