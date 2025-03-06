@@ -48,8 +48,6 @@ services:
     image:  esatya/rahat-ui:dev-local-setup
     container_name: rahat_ui
     restart: unless-stopped
-    env_file:
-      - .env.rahat-ui
     # ports:
       # - 3000:3000
     network_mode: "host"

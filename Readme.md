@@ -2,9 +2,15 @@
 
 ## Installtion:
 ### Automatic Setup:
-```
-curl -fsSL https://raw.githubusercontent.com/rahataid/Rahat-Setup/refs/heads/main/setup.sh | bash
-```
+- Prod:
+    ```sh
+    curl -fsSL https://raw.githubusercontent.com/rahataid/Rahat-Setup/refs/heads/main/setup.sh | bash
+    ```
+
+- Dev:
+    ```sh
+    curl -fsSL https://raw.githubusercontent.com/rahataid/Rahat-Setup/refs/heads/main/setup.sh | bash -s dev
+    ```
 
 
 ### Manually

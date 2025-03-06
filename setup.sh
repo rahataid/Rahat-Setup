@@ -146,6 +146,24 @@ check_ports_occupied() {
     fi
 }
 
+setup_node() {
+    echo "Installing NVM..."
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash || handle_error "installing NVM"
+
+    echo "Loading NVM..."
+    export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" || handle_error "loading nvm.sh"
+
+    echo "Installing Node.js v20..."
+    nvm install v20 || handle_error "installing Node.js v20"
+
+    echo "Installing PNPM globally..."
+    npm install -g pnpm || handle_error "installing pnpm"
+    
+    echo "Node.js and pnpm setup complete!"
+}
+
+
 request_sudo() {
     if hash sudo 2>/dev/null; then
         echo -e "\n\n🙇 We will need sudo access to complete the installation."
@@ -284,7 +302,7 @@ start_docker_compose() {
 # Run Prisma migrations
 run_prisma_migrations() {
     echo "Running Prisma migration..."
-    
+    sleep 10  # Wait for Docker containers to start
     # Check if 'dev' argument is passed
     if [[ "$1" == "dev" ]]; then
         # If 'dev' is passed, run the migration locally
@@ -397,6 +415,7 @@ main() {
 
     # Check if 'dev' argument is passed
     if [ "$1" == "dev" ]; then
+        setup_node
         # Clone Rahat-Setup repository (always)
         clone_repository
 
