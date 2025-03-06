@@ -263,7 +263,7 @@ comment_out_command_line() {
     echo "Commenting out the 'command: sleep 500' line in the docker-compose.yml..."
     
     # Use 'sed' to comment out the exact line 'command: sleep 500'
-    sed -i '/^command: sleep 500/s/^/#/' docker/docker-compose.yaml || handle_error "commenting out the 'command: sleep 500' line in docker-compose.yml"
+    sed -i 's/command: sleep 500/#command: sleep 500/' docker/docker-compose.yaml || handle_error "commenting out the 'command: sleep 500' line in docker-compose.yml"
 }
 
 
@@ -308,7 +308,8 @@ restart_docker_compose() {
         # If 'dev' is passed, run the migration locally
         docker compose -f docker-compose-local.yaml restart || handle_error "restarting Docker containers with docker-compose"
     else
-        docker compose -f docker-compose.yaml restart || handle_error "restarting Docker containers with docker-compose"
+        docker rm rahat_platform -f || handle_error "removing rahat-platform container"
+        docker compose -f docker-compose.yaml up -d || handle_error "restarting Docker containers with docker-compose"
     fi
     cd $CWD
 }
