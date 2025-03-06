@@ -44,7 +44,7 @@ services:
     network_mode: "host"
 
   rahat_ui:
-    image:  esatya/rahat-ui:local-setup
+    image:  esatya/rahat-ui:dev-local-setup
     container_name: rahat_ui
     restart: unless-stopped
     env_file:
