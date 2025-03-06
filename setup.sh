@@ -284,12 +284,18 @@ run_prisma_migrations() {
     fi
 }
 
-
 # Restart Docker Compose
 restart_docker_compose() {
     echo "Restarting Docker Compose..."
-    cd docker || handle_error "changing to docker directory"
-    docker compose -f docker-compose-local.yaml restart || handle_error "restarting Docker containers with docker-compose"
+    cd $CWD/docker || handle_error "changing to docker directory"
+    # Check if 'dev' argument is passed
+    if [[ "$1" == "dev" ]]; then
+        # If 'dev' is passed, run the migration locally
+        docker compose -f docker-compose-local.yaml restart || handle_error "restarting Docker containers with docker-compose"
+    else
+        docker compose -f docker-compose-local.yaml restart || handle_error "restarting Docker containers with docker-compose"
+    fi
+    cd $CWD
 }
 
 # Cleanup function
