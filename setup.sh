@@ -141,6 +141,22 @@ check_ports_occupied() {
     fi
 }
 
+request_sudo() {
+    if hash sudo 2>/dev/null; then
+        echo -e "\n\n🙇 We will need sudo access to complete the installation."
+        if (( $EUID != 0 )); then
+            sudo_cmd="sudo"
+            echo -e "Please enter your sudo password, if prompted."
+            if ! $sudo_cmd -l | grep -e "NOPASSWD: ALL" > /dev/null && ! $sudo_cmd -v; then
+                echo "Need sudo privileges to proceed with the installation."
+                exit 1;
+            fi
+
+            echo -e "Got it! Thanks!! 🙏\n"
+            echo -e "Okay! We will bring up the SigNoz cluster from here 🚀\n"
+        fi
+	fi
+}
 
 # Function to install Docker
 install_docker() {
