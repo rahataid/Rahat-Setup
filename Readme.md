@@ -1,8 +1,17 @@
 # Rahat Setup
-## Clone Rahat Setup Repo:
-```sh
-git clone https://github.com/rahataid/Rahat-Setup.git
+
+## Installtion:
+### Automatic Setup:
 ```
+curl -fsSL https://github.com/rahataid/Rahat-Setup/blob/main/setup.sh | sh
+```
+
+
+### Manually
+- Clone Rahat Setup Repo:
+    ```sh
+    git clone https://github.com/rahataid/Rahat-Setup.git
+    ```
 
 ## Prerequisites Tools:
 - Docker.

@@ -153,7 +153,7 @@ request_sudo() {
             fi
 
             echo -e "Got it! Thanks!! 🙏\n"
-            echo -e "Okay! We will bring up the SigNoz cluster from here 🚀\n"
+            echo -e "Okay! We will bring up the Rahat cluster from here 🚀\n"
         fi
 	fi
 }
@@ -166,8 +166,17 @@ install_docker() {
         # Install Docker on Ubuntu/Debian-based systems
         $sudo_cmd apt-get update -y || handle_error "updating package list"
         $sudo_cmd apt-get install -y apt-transport-https ca-certificates curl software-properties-common || handle_error "installing dependencies"
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | $sudo_cmd apt-key add - || handle_error "adding Docker GPG key"
-        $sudo_cmd add-apt-repository "deb [arch=$arch] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" || handle_error "adding Docker repository"
+        
+        # Download and add Docker GPG key
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | $sudo_cmd tee /etc/apt/keyrings/docker.asc > /dev/null || handle_error "adding Docker GPG key"
+        
+        # Add Docker repository
+        echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+        $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+        $sudo_cmd tee /etc/apt/sources.list.d/docker.list > /dev/null || handle_error "adding Docker repository"
+
+        # Update package list and install Docker
         $sudo_cmd apt-get update -y || handle_error "updating package list"
         $sudo_cmd apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || handle_error "installing Docker"
     elif [[ $package_manager == "yum" || $package_manager == "dnf" ]]; then
@@ -365,7 +374,7 @@ main() {
     # Check if 'dev' argument is passed
     if [ "$1" == "dev" ]; then
         # Clone Rahat-Setup repository (always)
-        clone_repositories
+        clone_repository
 
         # Clone sub-repositories (rahat-platform, rahat-ui)
         clone_sub_repositories
@@ -374,7 +383,7 @@ main() {
         setup_environment
     else
         # If 'dev' argument is not passed, just clone the Rahat-Setup repository
-        clone_repositories
+        clone_repository
     fi
 
     # Start application with the appropriate Docker Compose file
