@@ -164,7 +164,7 @@ setup_node() {
     echo "Loading NVM..."
     export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" || handle_error "loading nvm.sh"
-
+    source ~/.bashrc || handle_error "sourcing .bashrc"
     if has_node; then
         echo "✅ Node.js is already installed."
     else
@@ -213,7 +213,7 @@ install_docker() {
         $sudo_cmd apt-get update -y || handle_error "updating package list"
         $sudo_cmd apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || handle_error "installing Docker"
         $sudo_cmd usermod -aG docker "${USER}" || handle_error "adding user to docker group"
-        newgrp docker
+
     elif [[ $package_manager == "yum" || $package_manager == "dnf" ]]; then
         # Install Docker on Red Hat/CentOS/Fedora-based systems
         $sudo_cmd yum install -y yum-utils || handle_error "installing yum-utils"
@@ -300,6 +300,7 @@ comment_out_command_line() {
 # Start application with Docker Compose
 start_docker_compose() {
     echo "Starting application with Docker Compose..."
+    newgrp docker
     if [ "$1" == "dev" ]; then
         echo "Running docker-compose-local.yaml for development..."
         cd docker || handle_error "changing to docker directory"
