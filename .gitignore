@@ -1,2 +1,4 @@
 rahat-platform/
 rahat-ui/
+.vagrant/
+Vagrantfile
