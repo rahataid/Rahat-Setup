@@ -33,8 +33,7 @@ services:
     environment:
       NX_DAEMON: "false"
     restart: unless-stopped
-    #command: /bin/sh -c "npx nx reset && pnpx prisma generate && pnpm rahat"
-    command: sleep 500
+    command: /bin/sh -c "npx nx reset && pnpx prisma generate && pnpm rahat"
     volumes:
       - ../rahat-platform:/usr/src/app 
       - /usr/src/app/node_modules 

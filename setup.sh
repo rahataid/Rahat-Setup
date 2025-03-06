@@ -295,7 +295,7 @@ run_prisma_migrations() {
     else
         # If 'dev' is not passed, run the migration inside the Docker container
         echo "No 'dev' argument passed. Running Prisma migration inside Docker container..."
-        docker exec rahat_platform pnpx prisma migrate dev --skip-seed || handle_error "running Prisma migration inside Docker container"
+        docker exec rahat_platform npx prisma migrate dev --skip-seed || handle_error "running Prisma migration inside Docker container"
     fi
 }
 
