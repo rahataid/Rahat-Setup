@@ -23,6 +23,10 @@ is_command_present() {
     type "$1" >/dev/null 2>&1
 }
 
+has_cmd() {
+    command -v "$1" > /dev/null 2>&1
+}
+
 # Check whether 'wget' command exists.
 has_wget() {
     has_cmd wget
@@ -31,7 +35,6 @@ has_wget() {
 has_sed() {
     has_cmd sed
 }
-
 
 # Check whether 'curl' command exists.
 has_curl() {
@@ -46,9 +49,6 @@ has_node() {
     has_cmd node
 }
 # Check whether the given command exists.
-has_cmd() {
-    command -v "$1" > /dev/null 2>&1
-}
 
 is_mac() {
     [[ $OSTYPE == darwin* ]]
@@ -159,12 +159,11 @@ setup_node() {
     else
         echo "Installing NVM..."
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash || handle_error "installing NVM"
+        echo "Loading NVM..."
+        export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" || handle_error "loading nvm.sh"
     fi
 
-    echo "Loading NVM..."
-    export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" || handle_error "loading nvm.sh"
-    source ~/.bashrc || handle_error "sourcing .bashrc"
     if has_node; then
         echo "✅ Node.js is already installed."
     else
@@ -448,7 +447,7 @@ main() {
     run_prisma_migrations "$1"
 
     # Comment out the 'command' line
-    comment_out_command_line 
+    comment_out_command_line "$1"
 
     # Restart Docker Compose
     restart_docker_compose
