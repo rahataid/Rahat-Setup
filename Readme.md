@@ -3,7 +3,7 @@
 ## Installtion:
 ### Automatic Setup:
 ```
-curl -fsSL https://github.com/rahataid/Rahat-Setup/blob/main/setup.sh | sh
+curl -fsSL https://raw.githubusercontent.com/rahataid/Rahat-Setup/refs/heads/main/setup.sh | bash
 ```
 
 
