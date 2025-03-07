@@ -2,6 +2,18 @@
 
 set -o errexit
 
+# --- Global Variables ---
+sudo_cmd=""
+package_manager=""
+desired_os=0
+os=""
+arch=""
+arch_official=""
+CWD=""
+docker_installed="false"
+PROJECT_INFO="$CWD/.project_info"
+echo "$CWD" >> "$PROJECT_INFO"
+
 # Regular Colors
 Black='\033[0;30m'        # Black
 Red='\[\e[0;31m\]'        # Red
@@ -136,6 +148,10 @@ check_os() {
 }
 
 check_ports_occupied() {
+    echo ""
+    echo "-------------------------"
+    echo "-------------------------"
+    echo "-------------------------"
     local port_check_output
     local ports_pattern="3000|3333"
 
@@ -159,7 +175,32 @@ check_ports_occupied() {
 }
 
 
+show_checklist() {
+    echo ""
+    echo "---------------------------------------"
+    echo "🔍 Pre-installation Checklist:"
+    echo "---------------------------------------"
+    
+    # Align columns for a more tabular output
+    printf "%-40s %s\n" "Checking if 'curl' is available..." "$(has_curl && echo "✅ Found" || echo "❌ Missing")"
+    printf "%-40s %s\n" "Checking if 'wget' is available..." "$(has_wget && echo "✅ Found" || echo "❌ Missing")"
+    printf "%-40s %s\n" "Checking if 'sed' is available..." "$(has_sed && echo "✅ Found" || echo "❌ Missing")"
+    printf "%-40s %s\n" "Checking if 'docker' is available..." "$(is_command_present docker && echo "✅ Found" || echo "❌ Missing")"
+
+    if [ "$1" == "dev" ]; then
+        echo ""
+        echo "🛠️ Dev mode enabled! Additional checks:"
+        printf "%-40s %s\n" "Checking if 'nvm' is available..." "$(has_nvm && echo "✅ Found" || echo "❌ Missing")"
+        printf "%-40s %s\n" "Checking if 'node' is available..." "$(has_node && echo "✅ Found" || echo "❌ Missing")"
+        printf "%-40s %s\n" "Checking if 'pnpm' is available..." "$(has_pnpm && echo "✅ Found" || echo "❌ Missing")"
+    fi
+}
+
 setup_node() {
+    echo ""
+    echo "---------------------------------------"
+    echo "🔍 Setup Node:"
+    echo "---------------------------------------"
     export NVM_DIR="$HOME/.nvm"
 
     if has_nvm; then
@@ -210,7 +251,10 @@ request_sudo() {
 
 # Function to install Docker
 install_docker() {
+    echo ""
+    echo "---------------------------------------"
     echo "Installing Docker..."
+    echo "---------------------------------------"
     
     if [[ $package_manager == "apt-get" ]]; then
         # Install Docker on Ubuntu/Debian-based systems
@@ -249,7 +293,10 @@ install_docker() {
 }
 
 start_docker() {
-    echo -e "🐳 Starting Docker ...\n"
+    echo ""
+    echo "---------------------------------------"
+    echo "🐳 Starting Docker ..."
+    echo "---------------------------------------"
     if [[ $os == "Mac" ]]; then
         open --background -a Docker && while ! docker system info > /dev/null 2>&1; do sleep 1; done
     else 
@@ -266,20 +313,29 @@ start_docker() {
 }
 
 clone_repository() {
+    echo ""
+    echo "---------------------------------------"
+    echo "Cloning Repository ..."
+    echo "---------------------------------------"
+    echo ""
     echo "Cloning Rahat-Setup repository..."
     git clone https://github.com/rahataid/Rahat-Setup.git || handle_error "cloning Rahat-Setup repository"
     cd Rahat-Setup || handle_error "changing to Rahat-Setup directory"
     CWD=$(pwd)  # Store current working directory (Rahat-Setup)
+    echo "$CWD" >> "$PROJECT_INFO"
+
 }
 
 clone_sub_repositories() {
+    echo ""
     echo "Cloning rahat-platform repository..."
     git clone https://github.com/rahataid/rahat-platform.git || handle_error "cloning rahat-platform repository"
     cd rahat-platform && git checkout dev || handle_error "checking out dev branch in rahat-platform"
     pnpm install || handle_error "installing pnpm dependencies in rahat-platform"
     pnpx prisma generate || handle_error "generating Prisma client for rahat-platform"
     cd $CWD
-
+    
+    echo ""
     echo "Cloning rahat-ui repository..."
     git clone https://github.com/rahataid/rahat-ui.git || handle_error "cloning rahat-ui repository"
     cd rahat-ui && git checkout dev || handle_error "checking out dev branch in rahat-ui"
@@ -289,7 +345,10 @@ clone_sub_repositories() {
 
 # Setup environment variables
 setup_environment() {
+    echo ""
+    echo "---------------------------------------"
     echo "Setting up environment files..."
+    echo "---------------------------------------"
     cd $CWD/docker || handle_error "changing to docker directory"
     cp $CWD/docker/.env.platform.example $CWD/docker/.env.platform || handle_error "copying .env.platform.example"
 
@@ -302,6 +361,10 @@ setup_environment() {
 
 # Function to comment out the command line in the docker-compose.yml
 comment_out_command_line() {
+    echo ""
+    echo "---------------------------------------"
+    echo "Commenting Out Command Line..."
+    echo "---------------------------------------"
     cd $CWD || handle_error "changing to Rahat-Setup directory"
     if [ "$1" == "dev" ]; then
         echo "Nothing"
@@ -314,29 +377,32 @@ comment_out_command_line() {
 
 # Start application with Docker Compose
 start_docker_compose() {
+    echo ""
+    echo "---------------------------------------"
     echo "Starting application with Docker Compose..."
-    groups
+    echo "---------------------------------------"
+    cd $CWD/docker || handle_error "changing to docker directory"
     if [ "$1" == "dev" ]; then
         echo "Running docker-compose-local.yaml for development..."
-        cd docker || handle_error "changing to docker directory"
         $sudo_cmd docker compose -f docker-compose-local.yaml up -d --build || handle_error "starting Docker containers with docker-compose-local"
     else
         echo "Running docker-compose.yaml for production..."
-        cd docker || handle_error "changing to docker directory"
         $sudo_cmd docker compose -f docker-compose.yaml up -d || handle_error "starting Docker containers with docker-compose"
     fi
 }
 
 # Run Prisma migrations
 run_prisma_migrations() {
+    echo ""
+    echo "---------------------------------------"
     echo "Running Prisma migration..."
+    echo "---------------------------------------"
     sleep 10  # Wait for Docker containers to start
     # Check if 'dev' argument is passed
     if [[ "$1" == "dev" ]]; then
         # If 'dev' is passed, run the migration locally
-        cd $CWD
-        cd rahat-platform || handle_error "changing to rahat-platform directory"
-        pnpx prisma migrate dev --skip-seed || handle_error "running Prisma migration"
+        cd $CWD/rahat-platform || handle_error "changing to rahat-platform directory"
+        npx prisma migrate dev --skip-seed || handle_error "running Prisma migration"
         cd $CWD
     else
         # If 'dev' is not passed, run the migration inside the Docker container
@@ -347,7 +413,10 @@ run_prisma_migrations() {
 
 # Restart Docker Compose
 restart_docker_compose() {
+    echo ""
+    echo "---------------------------------------"
     echo "Restarting Docker Compose..."
+    echo "---------------------------------------"
     cd $CWD/docker || handle_error "changing to docker directory"
     # Check if 'dev' argument is passed
     if [[ "$1" == "dev" ]]; then
@@ -360,14 +429,77 @@ restart_docker_compose() {
     cd $CWD
 }
 
+
+check_services_status() {
+    echo ""
+    echo "------------------------------------------------------------"
+    echo "🔍 Checking if Docker containers are running properly..."
+    echo "------------------------------------------------------------"
+
+    # Check if Rahat UI container is running
+    if docker ps --filter "name=rahat_ui" --format '{{.Names}}' > /dev/null; then
+        echo "✅ Rahat UI container is running."
+    else
+        echo "❌ Rahat UI container is not running."
+    fi
+
+    # Check if Rahat Platform container is running
+    if docker ps --filter "name=rahat_platform" --format '{{.Names}}' > /dev/null; then
+        echo "✅ Rahat Platform container is running."
+    else
+        echo "❌ Rahat Platform container is not running."
+    fi
+    
+    echo ""
+    echo "🔍 Checking if Rahat UI and Rahat Platform are accessible..."
+
+    # Check if Rahat UI is accessible on localhost:3000
+    if curl --silent --head --fail http://localhost:3000 > /dev/null; then
+        echo "✅ Rahat UI is accessible at http://localhost:3000"
+    else
+        echo "❌ Rahat UI is not accessible at http://localhost:3000"
+    fi
+
+    # Check if Rahat Platform is accessible on localhost:3333
+    if curl --silent --head --fail http://localhost:3333 > /dev/null; then
+        echo "✅ Rahat Platform is accessible at http://localhost:3333"
+    else
+        echo "❌ Rahat Platform is not accessible at http://localhost:3333"
+    fi
+
+    echo ""
+}
+
+
 # Cleanup function
 cleanup() {
-    echo "Stopping Docker containers..."
-    cd docker || handle_error "changing to docker directory"
-    $sudo_cmd docker compose down || handle_error "stopping Docker containers"
+    echo ""
+    echo "-------------------------------------"
+    echo "🔍 Stopping Docker containers..."
+    echo "-------------------------------------"
+
+    CWD=$(realpath $(dirname "$0"))
+    # echo "Script directory (Absolute path): $CWD"
+
+    Explicitly pass .project_info location
+    PROEJECT_INFO="$CWD/.project_info"
+    
+    # Read docker_installed and CWD from the .project_info file
+    docker_installed=$(sed -n '1p' "$PROEJECT_INFO")  # First line is docker_installed
+    CWD=$(sed -n '2p' "$PROEJECT_INFO")  # Second line is CWD
+
+    # Change directory to where the docker-compose file is located
+    cd $CWD/docker || handle_error "changing to docker directory"
+    
+    # Stop and remove containers using docker-compose.yaml or docker-compose-local.yaml
+    echo "Stopping containers using docker-compose..."
+    $sudo_cmd docker compose -f docker-compose.yaml down || handle_error "stopping Docker containers from docker-compose.yaml"
+    $sudo_cmd docker compose -f docker-compose-local.yaml down || handle_error "stopping Docker containers from docker-compose-local.yaml"
+
+    echo "Docker containers stopped and removed."
 
     # Check if Docker was installed by the script and remove it
-    if [ "$docker_installed" == "true" ]; then
+    if [ -f "$CWD/.docker_installed" ] && [ "$(cat "$CWD/.docker_installed")" == "true" ]; then
         echo "Docker was installed by the script. Removing Docker..."
         if [[ $package_manager == "apt-get" ]]; then
             $sudo_cmd apt-get remove --purge docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y || handle_error "removing Docker"
@@ -378,11 +510,14 @@ cleanup() {
         elif [[ $package_manager == "dnf" ]]; then
             $sudo_cmd dnf remove docker-ce docker-ce-cli containerd.io -y || handle_error "removing Docker"
         fi
+        # Remove the marker file after Docker is removed
+        rm "$CWD/.docker_installed"
         echo "Docker removed successfully."
     else
         echo "Docker was already installed, skipping removal."
     fi
 }
+
 
 # Main Script Execution
 main() {
@@ -390,6 +525,8 @@ main() {
         cleanup
         exit 0
     fi
+
+    show_checklist "$1"
 
     echo ""
     echo -e "👋 Thank you for trying out Rahat! "
@@ -419,6 +556,9 @@ main() {
         if [[ $package_manager == "apt-get" || $package_manager == "zypper" || $package_manager == "yum" ]]; then
             request_sudo
             install_docker
+            # Mark Docker as installed by the script
+            echo "true" > "$PROJECT_INFO"
+
         elif is_mac; then
             echo ""
             echo "+++++++++++ IMPORTANT READ ++++++++++++++++++++++"
@@ -467,7 +607,7 @@ main() {
 
     # Restart Docker Compose
     restart_docker_compose "$1"
-
+    check_services_status   
     echo "Setup completed successfully."
 }
 
