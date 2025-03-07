@@ -436,14 +436,14 @@ check_services_status() {
     echo "------------------------------------------------------------"
 
     # Check if Rahat UI container is running
-    if docker ps --filter "name=rahat_ui" --format '{{.Names}}' > /dev/null; then
+    if $sudo_cmd docker ps --filter "name=rahat_ui" --format '{{.Names}}' > /dev/null; then
         echo "✅ Rahat UI container is running."
     else
         echo "❌ Rahat UI container is not running."
     fi
 
     # Check if Rahat Platform container is running
-    if docker ps --filter "name=rahat_platform" --format '{{.Names}}' > /dev/null; then
+    if $sudo_cmd docker ps --filter "name=rahat_platform" --format '{{.Names}}' > /dev/null; then
         echo "✅ Rahat Platform container is running."
     else
         echo "❌ Rahat Platform container is not running."
