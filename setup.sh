@@ -239,12 +239,10 @@ request_sudo() {
             sudo_cmd="sudo"
             echo -e "Please enter your sudo password, if prompted."
             if ! $sudo_cmd -l | grep -e "NOPASSWD: ALL" > /dev/null && ! $sudo_cmd -v; then
-                echo "Need sudo privileges to proceed with the installation."
+                echo "Need sudo privileges to proceed"
                 exit 1;
             fi
 
-            echo -e "Got it! Thanks!! 🙏\n"
-            echo -e "Okay! We will bring up the Rahat cluster from here 🚀\n"
         fi
 	fi
 }
@@ -470,7 +468,6 @@ check_services_status() {
 }
 
 
-# Cleanup function
 cleanup() {
     echo ""
     echo "-------------------------------------"
@@ -481,6 +478,9 @@ cleanup() {
     docker_installed=$(sed -n '1p' "$PROJECT_INFO")  # First line is docker_installed
     CWD=$(sed -n '2p' "$PROJECT_INFO")  # Second line is CWD
 
+    # echo $docker_installed
+    # echo $CWD
+
     # Check if we successfully read the information
     if [ -z "$docker_installed" ] || [ -z "$CWD" ]; then
         echo "Error: .project_info is missing required data."
@@ -489,7 +489,7 @@ cleanup() {
 
     # Change directory to where the docker-compose file is located
     cd "$CWD/docker" || handle_error "changing to docker directory"
-
+    request_sudo
     # Stop and remove containers using docker-compose.yaml or docker-compose-local.yaml
     echo "Stopping containers using docker-compose..."
     $sudo_cmd docker compose -f docker-compose.yaml down || handle_error "stopping Docker containers from docker-compose.yaml"
@@ -501,7 +501,7 @@ cleanup() {
     if [ "$docker_installed" == "true" ]; then
         echo "Docker was installed by the script. Removing Docker..."
         if [[ $package_manager == "apt-get" ]]; then
-            $sudo_cmd apt-get remove --purge docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y || handle_error "removing Docker"
+            $sudo_cmd apt-get purge docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras -y || handle_error "removing docker packages"
             $sudo_cmd apt-get autoremove -y || handle_error "removing unused packages"
             $sudo_cmd apt-get clean || handle_error "cleaning up apt cache"
         elif [[ $package_manager == "yum" ]]; then
@@ -510,7 +510,7 @@ cleanup() {
             $sudo_cmd dnf remove docker-ce docker-ce-cli containerd.io -y || handle_error "removing Docker"
         fi
         # Remove the marker file after Docker is removed
-        rm $PROEJECT_INFO
+        rm $PROJECT_INFO
         echo "Docker removed successfully."
     else
         echo "Docker was already installed, skipping removal."
@@ -519,6 +519,13 @@ cleanup() {
 
 # Main Script Execution
 main() {
+    # Checking OS and assigning package manager
+    desired_os=0
+    os=""
+    email=""
+    echo -e "🌏 Detecting your OS ...\n"
+    check_os
+
     if [ "$1" == "cleanup" ]; then
         cleanup
         exit 0
@@ -540,13 +547,6 @@ main() {
     else
         sudo_cmd="sudo"
     fi
-
-    # Checking OS and assigning package manager
-    desired_os=0
-    os=""
-    email=""
-    echo -e "🌏 Detecting your OS ...\n"
-    check_os
 
     # Check if Docker daemon is installed and available
     if ! is_command_present docker; then
