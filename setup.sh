@@ -23,6 +23,8 @@ is_command_present() {
     type "$1" >/dev/null 2>&1
 }
 
+# Check whether the given command exists.
+
 has_cmd() {
     command -v "$1" > /dev/null 2>&1
 }
@@ -42,13 +44,16 @@ has_curl() {
 }
 
 has_nvm() {
-    has_cmd nvm
+    [ -s "$HOME/.nvm/nvm.sh" ]
 }
 
 has_node() {
     has_cmd node
 }
-# Check whether the given command exists.
+
+has_pnpm() {
+    has_cmd pnpm
+}
 
 is_mac() {
     [[ $OSTYPE == darwin* ]]
@@ -153,14 +158,17 @@ check_ports_occupied() {
     fi
 }
 
+
 setup_node() {
+    export NVM_DIR="$HOME/.nvm"
+
     if has_nvm; then
-        echo "✅ NVM is already installed."
+        echo "✅ NVM is already installed. Loading NVM..."
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" || handle_error "loading nvm.sh"
     else
         echo "Installing NVM..."
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash || handle_error "installing NVM"
         echo "Loading NVM..."
-        export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
         [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" || handle_error "loading nvm.sh"
     fi
 
@@ -171,9 +179,13 @@ setup_node() {
         nvm install v20 || handle_error "installing Node.js v20"
     fi
 
-    echo "Installing PNPM globally..."
-    npm install -g pnpm || handle_error "installing pnpm"
-    
+    if has_pnpm; then
+        echo "✅ PNPM is already installed globally."
+    else
+        echo "Installing PNPM globally..."
+        npm install -g pnpm || handle_error "installing pnpm"
+    fi
+
     echo "✅ Node.js and pnpm setup complete!"
 }
 
@@ -278,13 +290,14 @@ clone_sub_repositories() {
 # Setup environment variables
 setup_environment() {
     echo "Setting up environment files..."
-    cd docker || handle_error "changing to docker directory"
-    cp .env.platform.example .env.platform || handle_error "copying .env.platform.example"
-    cp .env.rahat-ui.example .env.rahat-ui || handle_error "copying .env.rahat-ui.example"
-    cd $CWD
+    cd $CWD/docker || handle_error "changing to docker directory"
+    cp $CWD/docker/.env.platform.example $CWD/docker/.env.platform || handle_error "copying .env.platform.example"
 
-    echo "Copying .env.platform into rahat-platform..."
-    cp docker/.env.platform rahat-platform/.env || handle_error "copying .env.platform to rahat-platform"
+    if [ "$1" == "dev" ]; then
+        cp $CWD/docker/.env.rahat-ui.example $CWD/docker/.env.rahat-ui || handle_error "copying .env.rahat-ui.example"
+        cp $CWD/docker/.env.platform $CWD/rahat-platform/.env || handle_error "copying .env.platform to rahat-platform"
+    fi
+    
 }
 
 # Function to comment out the command line in the docker-compose.yml
@@ -429,7 +442,7 @@ main() {
 
     # Check if 'dev' argument is passed
     if [ "$1" == "dev" ]; then
-        setup_node
+        setup_node "$1"
         # Clone Rahat-Setup repository (always)
         clone_repository
 
@@ -453,7 +466,7 @@ main() {
     comment_out_command_line "$1"
 
     # Restart Docker Compose
-    restart_docker_compose
+    restart_docker_compose "$1"
 
     echo "Setup completed successfully."
 }
