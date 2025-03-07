@@ -298,6 +298,7 @@ comment_out_command_line() {
 # Start application with Docker Compose
 start_docker_compose() {
     echo "Starting application with Docker Compose..."
+    newgrp docker
     if [ "$1" == "dev" ]; then
         echo "Running docker-compose-local.yaml for development..."
         cd docker || handle_error "changing to docker directory"
@@ -401,7 +402,6 @@ main() {
         if [[ $package_manager == "apt-get" || $package_manager == "zypper" || $package_manager == "yum" ]]; then
             request_sudo
             install_docker
-            newgrp docker
         elif is_mac; then
             echo ""
             echo "+++++++++++ IMPORTANT READ ++++++++++++++++++++++"
