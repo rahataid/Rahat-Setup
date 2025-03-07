@@ -212,7 +212,10 @@ install_docker() {
         $sudo_cmd apt-get update -y || handle_error "updating package list"
         $sudo_cmd apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || handle_error "installing Docker"
         $sudo_cmd usermod -aG docker "${USER}" || handle_error "adding user to docker group"
-        newgrp docker
+
+        echo "✅ Docker installed successfully."
+        echo "⚠️  You must log out and log back in to use Docker without sudo."
+        echo "⚠️  For this session, Docker commands will need 'sudo'."
     elif [[ $package_manager == "yum" || $package_manager == "dnf" ]]; then
         # Install Docker on Red Hat/CentOS/Fedora-based systems
         $sudo_cmd yum install -y yum-utils || handle_error "installing yum-utils"
@@ -299,15 +302,15 @@ comment_out_command_line() {
 # Start application with Docker Compose
 start_docker_compose() {
     echo "Starting application with Docker Compose..."
-    newgrp docker
+    groups
     if [ "$1" == "dev" ]; then
         echo "Running docker-compose-local.yaml for development..."
         cd docker || handle_error "changing to docker directory"
-        docker compose -f docker-compose-local.yaml up -d --build || handle_error "starting Docker containers with docker-compose-local"
+        $sudo_cmd docker compose -f docker-compose-local.yaml up -d --build || handle_error "starting Docker containers with docker-compose-local"
     else
         echo "Running docker-compose.yaml for production..."
         cd docker || handle_error "changing to docker directory"
-        docker compose -f docker-compose.yaml up -d || handle_error "starting Docker containers with docker-compose"
+        $sudo_cmd docker compose -f docker-compose.yaml up -d || handle_error "starting Docker containers with docker-compose"
     fi
 }
 
@@ -325,7 +328,7 @@ run_prisma_migrations() {
     else
         # If 'dev' is not passed, run the migration inside the Docker container
         echo "No 'dev' argument passed. Running Prisma migration inside Docker container..."
-        docker exec rahat_platform npx prisma migrate dev --skip-seed || handle_error "running Prisma migration inside Docker container"
+        $sudo_cmd docker exec rahat_platform npx prisma migrate dev --skip-seed || handle_error "running Prisma migration inside Docker container"
     fi
 }
 
@@ -336,10 +339,10 @@ restart_docker_compose() {
     # Check if 'dev' argument is passed
     if [[ "$1" == "dev" ]]; then
         # If 'dev' is passed, run the migration locally
-        docker compose -f docker-compose-local.yaml restart || handle_error "restarting Docker containers with docker-compose"
+        $sudo_cmd docker compose -f docker-compose-local.yaml restart || handle_error "restarting Docker containers with docker-compose"
     else
-        docker rm rahat_platform -f || handle_error "removing rahat-platform container"
-        docker compose -f docker-compose.yaml up -d || handle_error "restarting Docker containers with docker-compose"
+        $sudo_cmd docker rm rahat_platform -f || handle_error "removing rahat-platform container"
+        $sudo_cmd docker compose -f docker-compose.yaml up -d || handle_error "restarting Docker containers with docker-compose"
     fi
     cd $CWD
 }
@@ -348,7 +351,7 @@ restart_docker_compose() {
 cleanup() {
     echo "Stopping Docker containers..."
     cd docker || handle_error "changing to docker directory"
-    docker compose down || handle_error "stopping Docker containers"
+    $sudo_cmd docker compose down || handle_error "stopping Docker containers"
 
     # Check if Docker was installed by the script and remove it
     if [ "$docker_installed" == "true" ]; then
