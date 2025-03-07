@@ -212,6 +212,7 @@ install_docker() {
         $sudo_cmd apt-get update -y || handle_error "updating package list"
         $sudo_cmd apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || handle_error "installing Docker"
         $sudo_cmd usermod -aG docker "${USER}" || handle_error "adding user to docker group"
+        newgrp docker
     elif [[ $package_manager == "yum" || $package_manager == "dnf" ]]; then
         # Install Docker on Red Hat/CentOS/Fedora-based systems
         $sudo_cmd yum install -y yum-utils || handle_error "installing yum-utils"
