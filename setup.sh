@@ -434,7 +434,7 @@ check_services_status() {
     echo "------------------------------------------------------------"
     echo "🔍 Checking if Docker containers are running properly..."
     echo "------------------------------------------------------------"
-
+    request_sudo
     # Check if Rahat UI container is running
     if $sudo_cmd docker ps --filter "name=rahat_ui" --format '{{.Names}}' > /dev/null; then
         echo "✅ Rahat UI container is running."
@@ -460,10 +460,10 @@ check_services_status() {
     fi
 
     # Check if Rahat Platform is accessible on localhost:3333
-    if curl --silent --head --fail http://localhost:3333 > /dev/null; then
-        echo "✅ Rahat Platform is accessible at http://localhost:3333"
+    if curl --silent --head --fail http://localhost:3333/swagger > /dev/null; then
+        echo "✅ Rahat Platform is accessible at http://localhost:3333/swagger"
     else
-        echo "❌ Rahat Platform is not accessible at http://localhost:3333"
+        echo "❌ Rahat Platform is not accessible at http://localhost:3333/swagger"
     fi
 
     echo ""
