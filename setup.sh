@@ -11,7 +11,8 @@ arch=""
 arch_official=""
 CWD=""
 docker_installed="false"
-PROEJECT_INFO=""
+PROJECT_INFO="/tmp/.project_info"
+
 
 # Regular Colors
 Black='\033[0;30m'        # Black
@@ -322,7 +323,6 @@ clone_repository() {
     cd Rahat-Setup || handle_error "changing to Rahat-Setup directory"
     CWD=$(pwd)  # Store current working directory (Rahat-Setup)
     echo "$CWD" >> "$PROJECT_INFO"
-    mv $PROJECT_INFO $CWD
 }
 
 clone_sub_repositories() {
@@ -477,11 +477,11 @@ cleanup() {
     echo "🔍 Stopping Docker containers..."
     echo "-------------------------------------"
 
-    CWD=$(realpath $(dirname "$0"))
-    # echo "Script directory (Absolute path): $CWD"
+    # CWD=$(realpath $(dirname "$0"))
+    # # echo "Script directory (Absolute path): $CWD"
 
-    # Explicitly pass .project_info location
-    PROEJECT_INFO="$CWD/.project_info"
+    # # Explicitly pass .project_info location
+    # PROEJECT_INFO="$CWD/.project_info"
     
     # Read docker_installed and CWD from the .project_info file
     docker_installed=$(sed -n '1p' "$PROEJECT_INFO")  # First line is docker_installed
@@ -556,7 +556,7 @@ main() {
             request_sudo
             install_docker
             # Mark Docker as installed by the script
-            PROJECT_INFO="/tmp/Rahat-Setup/.project_info"
+            PROJECT_INFO="/tmp/.project_info"
             echo "true" > "$PROJECT_INFO"
 
         elif is_mac; then
