@@ -607,8 +607,12 @@ main() {
 
     # Restart Docker Compose
     restart_docker_compose "$1"
-    check_services_status   
-    echo "Setup completed successfully."
+    check_services_status
+    newgrp docker
+    echo ""
+    echo "-------------------------------------"
+    echo "Setup completed successfully. Now you can use docker without sudo"
+    echo "-------------------------------------"
 }
 
 # Call the main function to execute the setup
