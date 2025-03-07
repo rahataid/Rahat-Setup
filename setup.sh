@@ -11,8 +11,6 @@ arch=""
 arch_official=""
 CWD=""
 docker_installed="false"
-PROJECT_INFO="$CWD/.project_info"
-echo "$CWD" >> "$PROJECT_INFO"
 
 # Regular Colors
 Black='\033[0;30m'        # Black
@@ -557,6 +555,7 @@ main() {
             request_sudo
             install_docker
             # Mark Docker as installed by the script
+            PROJECT_INFO="$CWD/.project_info"
             echo "true" > "$PROJECT_INFO"
 
         elif is_mac; then
