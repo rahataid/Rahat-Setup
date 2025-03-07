@@ -477,19 +477,19 @@ cleanup() {
     echo "🔍 Stopping Docker containers..."
     echo "-------------------------------------"
 
-    # CWD=$(realpath $(dirname "$0"))
-    # # echo "Script directory (Absolute path): $CWD"
-
-    # # Explicitly pass .project_info location
-    # PROEJECT_INFO="$CWD/.project_info"
-    
     # Read docker_installed and CWD from the .project_info file
-    docker_installed=$(sed -n '1p' "$PROEJECT_INFO")  # First line is docker_installed
-    CWD=$(sed -n '2p' "$PROEJECT_INFO")  # Second line is CWD
+    docker_installed=$(sed -n '1p' "$PROJECT_INFO")  # First line is docker_installed
+    CWD=$(sed -n '2p' "$PROJECT_INFO")  # Second line is CWD
+
+    # Check if we successfully read the information
+    if [ -z "$docker_installed" ] || [ -z "$CWD" ]; then
+        echo "Error: .project_info is missing required data."
+        exit 1
+    fi
 
     # Change directory to where the docker-compose file is located
-    cd $CWD/docker || handle_error "changing to docker directory"
-    
+    cd "$CWD/docker" || handle_error "changing to docker directory"
+
     # Stop and remove containers using docker-compose.yaml or docker-compose-local.yaml
     echo "Stopping containers using docker-compose..."
     $sudo_cmd docker compose -f docker-compose.yaml down || handle_error "stopping Docker containers from docker-compose.yaml"
@@ -498,7 +498,7 @@ cleanup() {
     echo "Docker containers stopped and removed."
 
     # Check if Docker was installed by the script and remove it
-    if [ -f "$CWD/.docker_installed" ] && [ "$(cat "$CWD/.docker_installed")" == "true" ]; then
+    if [ "$docker_installed" == "true" ]; then
         echo "Docker was installed by the script. Removing Docker..."
         if [[ $package_manager == "apt-get" ]]; then
             $sudo_cmd apt-get remove --purge docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y || handle_error "removing Docker"
@@ -510,13 +510,12 @@ cleanup() {
             $sudo_cmd dnf remove docker-ce docker-ce-cli containerd.io -y || handle_error "removing Docker"
         fi
         # Remove the marker file after Docker is removed
-        rm "$CWD/.docker_installed"
+        rm $PROEJECT_INFO
         echo "Docker removed successfully."
     else
         echo "Docker was already installed, skipping removal."
     fi
 }
-
 
 # Main Script Execution
 main() {
