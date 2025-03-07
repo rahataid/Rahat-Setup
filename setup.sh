@@ -555,6 +555,7 @@ main() {
             request_sudo
             install_docker
             # Mark Docker as installed by the script
+            CWD="$(realpath $(dirname "$0"))/Rahat-Setup"
             PROJECT_INFO="$CWD/.project_info"
             echo "true" > "$PROJECT_INFO"
 
